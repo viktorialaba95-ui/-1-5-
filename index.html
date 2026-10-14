@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Симулятор НМТ | Історія України (Теми 1-5 | Хардкор)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --olive: #4A5D4E;
+            --olive-hover: #3a493d;
+            --beige: #F8F5EE;
+            --gold: #A38C59;
+            --dark: #2C352D;
+            --light-border: #E3D9C4;
+            --correct: #2e7d32;
+            --wrong: #c62828;
+            --partial: #f57f17;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--beige);
+            color: var(--dark);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .playfair { font-family: 'Playfair Display', serif; }
+
+        #app {
+            width: 100%;
+            max-width: 1100px;
+            margin: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(44, 53, 45, 0.08);
+            border: 1px solid var(--light-border);
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .btn {
+            background-color: var(--olive);
+            color: #fff;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            font-family: 'Montserrat', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn:hover { background-color: var(--olive-hover); }
+        .btn:disabled { background-color: #ccc; cursor: not-allowed; }
+        .btn-gold { background-color: var(--gold); }
+        .btn-gold:hover { background-color: #8b764a; }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 16px;
+            margin-bottom: 24px;
+            border: 2px solid var(--light-border);
+            border-radius: 8px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 16px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus { border-color: var(--olive); }
+
+        .test-container { display: flex; gap: 30px; flex-wrap: wrap; align-items: flex-start; }
+        .sidebar { flex: 0 0 300px; position: sticky; top: 20px; }
+        .main-content { flex: 1; min-width: 0; }
+
+        @media (max-width: 768px) {
+            .test-container { flex-direction: column-reverse; }
+            .sidebar { flex: auto; position: static; width: 100%; }
+        }
+
+        .timer-box {
+            background-color: var(--olive);
+            color: #fff;
+            text-align: center;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(74, 93, 78, 0.2);
+        }
+        .timer-time { font-size: 36px; font-weight: 700; margin-top: 5px; }
+
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            background: var(--beige);
+            padding: 15px;
+            border-radius: 12px;
+        }
+        .nav-btn {
+            aspect-ratio: 1;
+            border: 2px solid transparent;
+            background: #fff;
+            border-radius: 50%;
+            color: var(--olive);
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        .nav-btn:hover { background: var(--light-border); }
+        .nav-btn.active { border-color: var(--olive); transform: scale(1.1); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .nav-btn.answered { background: var(--gold); color: #fff; }
+        .nav-btn.answered.active { border-color: var(--dark); }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--beige);
+        }
+        .q-number { color: var(--gold); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; font-size: 14px; }
+        .q-points { background: var(--beige); color: var(--olive); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+
+        .q-text { font-size: 20px; font-weight: 700; margin-bottom: 20px; line-height: 1.6; color: var(--dark); }
+
+        .quote {
+            background: var(--beige);
+            border-left: 5px solid var(--gold);
+            padding: 15px 20px;
+            font-style: italic;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+            color: #333;
+            font-size: 18px;
+            line-height: 1.5;
+            font-weight: 500;
+        }
+
+        .option-label {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            border: 2px solid var(--light-border);
+            border-radius: 10px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+        .option-label:hover { background: var(--beige); }
+        .option-label.selected { background: var(--beige); border-color: var(--gold); }
+        .option-label input { display: none; }
+        
+        .custom-radio {
+            width: 20px; height: 20px; border: 2px solid #ccc; border-radius: 50%; margin-right: 15px;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .option-label.selected .custom-radio { border-color: var(--gold); }
+        .option-label.selected .custom-radio::after {
+            content: ''; width: 10px; height: 10px; background: var(--gold); border-radius: 50%;
+        }
+
+        .custom-check {
+            width: 20px; height: 20px; border: 2px solid #ccc; border-radius: 4px; margin-right: 15px;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .option-label.selected .custom-check { border-color: var(--olive); background: var(--olive); }
+        .option-label.selected .custom-check::after {
+            content: '✓'; color: #fff; font-size: 14px; font-weight: bold;
+        }
+        .option-label.disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .match-grid { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .match-grid th, .match-grid td { border: 1px solid var(--light-border); padding: 10px; text-align: center; }
+        .match-grid th { background: var(--beige); color: var(--olive); }
+        .match-radio { transform: scale(1.3); cursor: pointer; }
+
+        .seq-item {
+            display: flex; align-items: center; padding: 12px; border: 1px solid var(--light-border);
+            border-radius: 8px; margin-bottom: 8px; background: #fff;
+        }
+        .seq-btns { display: flex; flex-direction: column; margin-right: 15px; gap: 4px; }
+        .seq-btn { background: var(--beige); border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; color: var(--olive); font-weight: bold; }
+        .seq-btn:hover:not(:disabled) { background: var(--light-border); }
+        .seq-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .seq-num { width: 30px; height: 30px; background: var(--olive); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 15px; flex-shrink: 0; }
+
+        .controls { display: flex; justify-content: space-between; margin-top: 30px; padding-top: 20px; border-top: 2px solid var(--beige); }
+
+        .res-header { text-align: center; margin-bottom: 40px; }
+        .res-score { font-size: 80px; font-weight: 900; color: var(--gold); line-height: 1; margin: 20px 0; }
+        
+        .res-item { background: #fff; padding: 20px; border-radius: 12px; margin-bottom: 16px; border: 1px solid var(--light-border); border-left: 8px solid; }
+        .res-item.correct { border-left-color: var(--correct); }
+        .res-item.partial { border-left-color: var(--partial); }
+        .res-item.wrong { border-left-color: var(--wrong); }
+        .res-item-title { font-weight: 700; color: var(--dark); margin-bottom: 10px; font-size: 16px; }
+        .res-ans { font-size: 15px; margin-top: 8px; padding: 12px; border-radius: 6px; }
+        .res-ans.user { background: #f5f5f5; border: 1px solid #e0e0e0; }
+        .res-ans.true { background: #e8f5e9; border: 1px solid #c8e6c9; color: #2e7d32; font-weight: 600; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script>
+    const QUESTIONS = [
+        { 
+            id: 1, type: 'single', 
+            text: "Яке твердження характеризує соціально-економічний розвиток племен трипільської культури?", 
+            options: [{id: 'A', text: "Ведення кочового скотарства як основи господарства"}, {id: 'B', text: "Осіле життя, перелогове землеробство та створення протоміст"}, {id: 'C', text: "Винайдення залізних знарядь праці та зброї"}, {id: 'D', text: "Панування патріархальних відносин та приватної власності на землю"}], 
+            correct: 'B' 
+        },
+        { 
+            id: 2, type: 'single', 
+            text: "Про який кочовий народ Північного Причорномор'я йдеться в уривку з праці античного історика Геродота: <div class='quote'>«Вони не мають ні міст, ні укріплень... вони — кінні стрільці, що живуть не від землеробства, а від скотарства... житла їхні на возах»?</div>", 
+            options: [{id: 'A', text: "Кіммерійців"}, {id: 'B', text: "Сарматів"}, {id: 'C', text: "Скіфів"}, {id: 'D', text: "Аварів"}], 
+            correct: 'C' 
+        },
+        { 
+            id: 3, type: 'single', 
+            text: "Що було однією з головних причин занепаду Великої Скіфії в ІІІ ст. до н.е.?", 
+            options: [{id: 'A', text: "Експансія сарматських племен зі сходу"}, {id: 'B', text: "Завоювання території римськими легіонами"}, {id: 'C', text: "Вторгнення гунів"}, {id: 'D', text: "Економічна блокада з боку античних полісів"}], 
+            correct: 'A' 
+        },
+        { 
+            id: 4, type: 'single', 
+            text: "Якому київському князю літописець приписує слова: <div class='quote'>«Не любо мені є в Києві жити. Хочу жити в Переяславці на Дунаї, бо то є середина землі моєї...»</div>?", 
+            options: [{id: 'A', text: "Князю Олегу"}, {id: 'B', text: "Князю Ігорю"}, {id: 'C', text: "Князю Святославу Ігоровичу"}, {id: 'D', text: "Князю Володимиру Великому"}], 
+            correct: 'C' 
+        },
+        { 
+            id: 5, type: 'single', 
+            text: "Що стало одним із найважливіших політичних наслідків упровадження християнства як державної релігії в Русі-Україні?", 
+            options: [{id: 'A', text: "Встановлення політичної залежності Київської держави від Візантії"}, {id: 'B', text: "Зміцнення центральної влади князя та територіальної єдності держави"}, {id: 'C', text: "Відокремлення церкви від держави та запровадження свободи віросповідання"}, {id: 'D', text: "Остаточний розпад держави на удільні князівства"}], 
+            correct: 'B' 
+        },
+        { 
+            id: 6, type: 'single', 
+            text: "У чому полягала суть адміністративної реформи княгині Ольги?", 
+            options: [{id: 'A', text: "Установлення чітких розмірів данини (уроків) і місць її збирання (погостів)"}, {id: 'B', text: "Ліквідація племінних княжінь та призначення на їхні землі посадників"}, {id: 'C', text: "Запровадження першого писаного збірника законів держави"}, {id: 'D', text: "Поділ території Русі між її синами для управління"}], 
+            correct: 'A' 
+        },
+        { 
+            id: 7, type: 'single', 
+            text: "Про кого з діячів Русі йдеться в уривку літопису: <div class='quote'>«Він був кульгавим, але розум мав добрий, і на війні був хоробрий... І зібрав він писців багатьох, і перекладали вони з грецької на слов'янську мову... і зібрали їх у церкві святої Софії...»?</div>", 
+            options: [{id: 'A', text: "Володимира Великого"}, {id: 'B', text: "Володимира Мономаха"}, {id: 'C', text: "Ярослава Осмомисла"}, {id: 'D', text: "Ярослава Мудрого"}], 
+            correct: 'D' 
+        },
+        { 
+            id: 8, type: 'single', 
+            text: "Згідно з нормами «Руської правди», хто такі «закупи»?", 
+            options: [{id: 'A', text: "Вільні селяни-общинники, які володіли землею"}, {id: 'B', text: "Селяни, які втратили свободу через отримання від феодала позики (купи)"}, {id: 'C', text: "Ремісники, які сплачували данину безпосередньо князю"}, {id: 'D', text: "Повністю безправні раби, захоплені в полон під час війни"}], 
+            correct: 'B' 
+        },
+        { 
+            id: 9, type: 'single', 
+            text: "Яке ключове рішення було ухвалене на Любецькому з'їзді князів у 1097 році?", 
+            options: [{id: 'A', text: "Запровадження християнства як єдиної державної релігії"}, {id: 'B', text: "Створення єдиного війська для походу проти Візантії"}, {id: 'C', text: "Затвердження принципу спадкового землеволодіння («Кождо хай держить отчину свою»)"}, {id: 'D', text: "Перенесення столиці Русі до Галича"}], 
+            correct: 'C' 
+        },
+        { 
+            id: 10, type: 'single', 
+            text: "Кому з правителів належать слова: <div class='quote'>«Не личить держати батьківщину нашу кривохижам... краще на своїй землі кістьми лягти, ніж на чужій славним бути»</div>, сказані напередодні битви за відновлення єдності Галицько-Волинської держави?", 
+            options: [{id: 'A', text: "Роману Мстиславичу"}, {id: 'B', text: "Данилу Романовичу (Галицькому)"}, {id: 'C', text: "Юрію І Львовичу"}, {id: 'D', text: "Володимиру Мономаху"}], 
+            correct: 'B' 
+        },
+        { 
+            id: 11, type: 'single', 
+            text: "Яка подія описана в уривку з літопису: <div class='quote'>«Прийшов Батий до Києва з великою силою... і обступила Київ сила татарська, і був город в облозі великій... і пали стіни, і взяли татари місто...»?</div>", 
+            options: [{id: 'A', text: "Битва на річці Калці (1223 р.)"}, {id: 'B', text: "Зруйнування Києва монголами (1240 р.)"}, {id: 'C', text: "Битва на Синіх Водах (1362 р.)"}, {id: 'D', text: "Захоплення Києва литовським князем Ольгердом (1362 р.)"}], 
+            correct: 'B' 
+        },
+        { 
+            id: 12, type: 'single', 
+            text: "Яке твердження безпосередньо стосується правління короля Данила Романовича?", 
+            options: [{id: 'A', text: "Перенесення столиці Галицько-Волинської держави до Львова"}, {id: 'B', text: "Розгром рицарів-хрестоносців у битві під Дорогочином у 1238 р."}, {id: 'C', text: "Добровільне входження Галичини до складу Королівства Польського"}, {id: 'D', text: "Укладення Кревської унії"}], 
+            correct: 'B' 
+        },
+        { 
+            id: 13, type: 'single', 
+            text: "Яка архітектурна споруда була характерною ознакою культурного розвитку Галицько-Волинської держави?", 
+            options: [{id: 'A', text: "Будівництво потужних оборонних замків та фортець із каменю і цегли (напр. вежі-донжони)"}, {id: 'B', text: "Створення перших в Україні дерев'яних козацьких церков"}, {id: 'C', text: "Масове зведення католицьких готичних соборів у кожному місті"}, {id: 'D', text: "Будівництво храмів виключно у стилі українського бароко"}], 
+            correct: 'A' 
+        },
+        { 
+            id: 14, type: 'single', 
+            text: "Що стало прямим наслідком битви на Синіх Водах (1362 р.)?", 
+            options: [{id: 'A', text: "Об'єднання Великого князівства Литовського та Королівства Польського"}, {id: 'B', text: "Звільнення українських земель від влади Золотої Орди та їх перехід під владу Литви"}, {id: 'C', text: "Початок масових набігів кримських татар на українські землі"}, {id: 'D', text: "Остаточна ліквідація Київського удільного князівства"}], 
+            correct: 'B' 
+        },
+        { 
+            id: 15, type: 'single', 
+            text: "Який документ передбачав <div class='quote'>«...з’єднати та приєднати свої землі Литви та Русі до корони Польської»</div> в обмін на шлюб великого князя литовського Ягайла з польською королевою Ядвігою?", 
+            options: [{id: 'A', text: "Городельська унія (1413 р.)"}, {id: 'B', text: "Люблінська унія (1569 р.)"}, {id: 'C', text: "Кревська унія (1385 р.)"}, {id: 'D', text: "Берестейська унія (1596 р.)"}], 
+            correct: 'C' 
+        },
+        { 
+            id: 16, type: 'single', 
+            text: "Хто очолив масштабне повстання руської (українсько-білоруської) знаті у 1432–1435 рр., намагаючись утримати політичну самостійність та рівноправність у Великому князівстві Литовському?", 
+            options: [{id: 'A', text: "Князь Ольгерд"}, {id: 'B', text: "Великий князь Свидригайло"}, {id: 'C', text: "Князь Вітовт"}, {id: 'D', text: "Костянтин Острозький"}], 
+            correct: 'B' 
+        },
+        { 
+            id: 17, type: 'single', 
+            text: "Про діяльність якого князя йдеться в уривку: <div class='quote'>«...виступив з 30-тисячним військом... і розбив 80-тисячну московську армію під Оршею. За цю перемогу він, як захисник православної віри, був удостоєний тріумфу у Вільні...»</div>?", 
+            options: [{id: 'A', text: "Свидригайла Ольгердовича"}, {id: 'B', text: "Юрія Дрогобича"}, {id: 'C', text: "Костянтина Острозького"}, {id: 'D', text: "Михайла Глинського"}], 
+            correct: 'C' 
+        },
+        { 
+            id: 18, type: 'single', 
+            text: "Що було ключовою ознакою надання українським містам Магдебурзького права у XIV–XVI ст.?", 
+            options: [{id: 'A', text: "Повне звільнення міщан від сплати будь-яких державних податків"}, {id: 'B', text: "Передача міст у приватну власність великим магнатам"}, {id: 'C', text: "Формування міського самоврядування (магістрату) та звільнення міщан від суду феодалів"}, {id: 'D', text: "Дозвіл займатися торгівлею і ремеслом виключно католикам"}], 
+            correct: 'C' 
+        },
+        { 
+            id: 19, type: 'single', 
+            text: "У якому році Кримське ханство на чолі з Менглі-Гіреєм офіційно визнало васальну залежність від Османської імперії?", 
+            options: [{id: 'A', text: "1441 р."}, {id: 'B', text: "1471 р."}, {id: 'C', text: "1478 р."}, {id: 'D', text: "1514 р."}], 
+            correct: 'C' 
+        },
+        { 
+            id: 20, type: 'single', 
+            text: "Поширення фільваркової системи господарювання на українських землях у XV–XVI ст. було зумовлено:", 
+            options: [{id: 'A', text: "Спробами католицької церкви збільшити свої доходи за рахунок селян"}, {id: 'B', text: "Стрімким зростанням попиту на сільськогосподарську продукцію (особливо зерно) на ринках Західної Європи"}, {id: 'C', text: "Економічним спустошенням через набіги монгольських військ"}, {id: 'D', text: "Масовим переселенням вільних селян на землі Дикого Поля"}], 
+            correct: 'B' 
+        },
+
+        { id: 21, type: 'match', text: "Установіть відповідність між уривком з літопису та київським князем, про якого йдеться:", 
+          left: [{id: 'L1', text: "1. «І послав він до печенігів послів, кажучи: “Іду на ви!”»"}, {id: 'L2', text: "2. «І розбив він печенігів під Києвом, і була січа люта...»"}, {id: 'L3', text: "3. «Якщо не з'явиться хто завтра на ріці — багатий, чи убогий... той мені ворогом буде.»"}, {id: 'L4', text: "4. «Кождо хай держить отчину свою...»"}],
+          right: [{id: 'A', text: "А. Володимир Великий"}, {id: 'B', text: "Б. Святослав Ігорович"}, {id: 'C', text: "В. Ярослав Мудрий"}, {id: 'D', text: "Г. Володимир Мономах"}, {id: 'E', text: "Д. Олег Віщий"}],
+          correct: { L1: 'B', L2: 'C', L3: 'A', L4: 'D' } },
+        { id: 22, type: 'match', text: "Установіть відповідність між історичним терміном та його визначенням:", 
+          left: [{id: 'L1', text: "1. Вотчина"}, {id: 'L2', text: "2. Віче"}, {id: 'L3', text: "3. Полюддя"}, {id: 'L4', text: "4. Фільварок"}],
+          right: [{id: 'A', text: "А. Велике багатогалузеве господарство, орієнтоване на продаж продукції"}, {id: 'B', text: "Б. Збирання данини князем зі своєї дружиною шляхом об'їзду земель"}, {id: 'C', text: "В. Форма земельної власності, що передавалася у спадок"}, {id: 'D', text: "Г. Загальні народні збори вільних містян для вирішення важливих справ"}, {id: 'E', text: "Д. Бранці, захоплені татарами під час набігів"}],
+          correct: { L1: 'C', L2: 'D', L3: 'B', L4: 'A' } },
+        { id: 23, type: 'match', text: "Установіть відповідність між битвою та роком, коли вона відбулася:", 
+          left: [{id: 'L1', text: "1. Битва на річці Калка"}, {id: 'L2', text: "2. Битва на Синіх Водах"}, {id: 'L3', text: "3. Грюнвальдська битва"}, {id: 'L4', text: "4. Битва під Оршею"}],
+          right: [{id: 'A', text: "А. 1223 р."}, {id: 'B', text: "Б. 1362 р."}, {id: 'C', text: "В. 1385 р."}, {id: 'D', text: "Г. 1410 р."}, {id: 'E', text: "Д. 1514 р."}],
+          correct: { L1: 'A', L2: 'B', L3: 'D', L4: 'E' } },
+        { id: 24, type: 'match', text: "Установіть відповідність між архітектурною пам'яткою та її характеристикою:", 
+          left: [{id: 'L1', text: "1. Софійський собор"}, {id: 'L2', text: "2. Десятинна церква"}, {id: 'L3', text: "3. Замок Любарта"}, {id: 'L4', text: "4. П'ятницька церква"}],
+          right: [{id: 'A', text: "А. Перший кам'яний храм Русі-України, збудований Володимиром Великим"}, {id: 'B', text: "Б. Головний храм держави, збудований на честь перемоги над печенігами"}, {id: 'C', text: "В. Шедевр архітектури кінця XII ст., розташований у Чернігові"}, {id: 'D', text: "Г. Могутня фортеця та резиденція волинських князів у Луцьку"}, {id: 'E', text: "Д. Перша церква, збудована в стилі українського бароко"}],
+          correct: { L1: 'B', L2: 'A', L3: 'D', L4: 'C' } }, 
+
+        { id: 25, type: 'sequence', text: "Установіть хронологічну послідовність подій часів Русі-України:",
+          items: [{id: 'S1', text: "Запровадження християнства як державної релігії"}, {id: 'S2', text: "Об'єднання Північної і Південної Русі князем Олегом"}, {id: 'S3', text: "Остаточний розгром печенігів під Києвом"}, {id: 'S4', text: "Установлення княгинею Ольгою погостів і уроків"}],
+          correct: ['S2', 'S4', 'S1', 'S3'] },
+        { id: 26, type: 'sequence', text: "Установіть послідовність подій в історії Галицько-Волинської держави:",
+          items: [{id: 'S1', text: "Коронація Данила Романовича посланцем Папи Римського"}, {id: 'S2', text: "Об'єднання Волинського та Галицького князівств Романом"}, {id: 'S3', text: "Захоплення та руйнування Києва монгольськими військами"}, {id: 'S4', text: "Смерть Юрія ІІ Болеслава (кінець місцевої династії)"}],
+          correct: ['S2', 'S3', 'S1', 'S4'] },
+        { id: 27, type: 'sequence', text: "Установіть послідовність укладання державно-політичних угод та подій XIV–XV ст.:",
+          items: [{id: 'S1', text: "Кревська унія між Великим князівством Литовським та Польщею"}, {id: 'S2', text: "Городельська унія"}, {id: 'S3', text: "Остаточна ліквідація Київського удільного князівства"}, {id: 'S4', text: "Перемога литовсько-руських військ на Синіх Водах"}],
+          correct: ['S4', 'S1', 'S2', 'S3'] },
+
+        { id: 28, type: 'multi', text: "Які твердження стосуються результатів та наслідків правління князя Ярослава Мудрого? (Оберіть 3 варіанти)",
+          options: [{id: 'M1', text: "Запровадження першого писаного збірника законів «Руська правда»."}, {id: 'M2', text: "Остаточний розгром Хозарського каганату."}, {id: 'M3', text: "Будівництво Софійського собору в Києві."}, {id: 'M4', text: "Приєднання до Русі території Галичини та Волині."}, {id: 'M5', text: "Розквіт «шлюбної дипломатії» з європейськими дворами."}, {id: 'M6', text: "Знищення половецької загрози на південних кордонах."}, {id: 'M7', text: "Перенесення столиці держави до Галича."}],
+          correct: ['M1', 'M3', 'M5'] },
+        { id: 29, type: 'multi', text: "Які риси характеризують політичне та соціально-економічне становище українських земель у складі ВКЛ в другій половині XIV — першій половині XV ст.? (Оберіть 3 варіанти)",
+          options: [{id: 'M1', text: "Поступова ліквідація міського самоврядування та скасування Магдебурзького права."}, {id: 'M2', text: "Збереження руської мови як офіційної мови діловодства князівства."}, {id: 'M3', text: "Штучне насадження ісламу на південних теренах."}, {id: 'M4', text: "Відсутність жорстких утисків православної віри на ранньому етапі."}, {id: 'M5', text: "Створення на українських землях регулярного козацького війська."}, {id: 'M6', text: "Існування українських удільних князівств під управлінням Гедиміновичів."}, {id: 'M7', text: "Переселення більшості селян на землі за Урал."}],
+          correct: ['M2', 'M4', 'M6'] },
+        { id: 30, type: 'multi', text: "Які племінні союзи східних слов'ян проживали безпосередньо на території сучасної України напередодні утворення Русі? (Оберіть 3 варіанти)",
+          options: [{id: 'M1', text: "Поляни"}, {id: 'M2', text: "Радимичі"}, {id: 'M3', text: "Дреговичі"}, {id: 'M4', text: "Деревляни"}, {id: 'M5', text: "В'ятичі"}, {id: 'M6', text: "Кривичі"}, {id: 'M7', text: "Сіверяни"}],
+          correct: ['M1', 'M4', 'M7'] }
+    ];
+
+    let state = {
+        screen: 'welcome', 
+        userName: '',
+        currentQ: 0,
+        timeLeft: 3600,
+        timerInterval: null,
+        answers: {} 
+    };
+
+    const appDiv = document.getElementById('app');
+
+    function render() {
+        if (state.screen === 'welcome') renderWelcome();
+        else if (state.screen === 'test') renderTest();
+        else if (state.screen === 'results') renderResults();
+    }
+
+    function renderWelcome() {
+        appDiv.innerHTML = `
+            <div class="card" style="max-width: 600px; margin: 40px auto; text-align: center; border-top: 8px solid var(--olive);">
+                <h1 style="font-size: 32px; margin-bottom: 10px;">Симулятор НМТ</h1>
+                <p style="color: var(--gold); font-weight: 700; margin-bottom: 30px; letter-spacing: 1px;">ІСТОРІЯ УКРАЇНИ • ТЕМИ 1-5 • ХАРДКОР</p>
+                <input type="text" id="nameInput" placeholder="Введіть ваше ім'я..." />
+                <button class="btn" onclick="startTest()" style="width: 100%; font-size: 18px; padding: 18px;">Розпочати тестування</button>
+                <p style="margin-top: 20px; font-size: 14px; color: #666;">60 хвилин • 30 завдань • Без картинок (тільки документи) • Макс: 54 бали</p>
+            </div>
+        `;
+    }
+
+    window.startTest = function() {
+        const name = document.getElementById('nameInput').value.trim();
+        if (!name) return alert("Будь ласка, введіть ім'я.");
+        
+        state.userName = name;
+        state.screen = 'test';
+        state.answers = {};
+        
+        QUESTIONS.forEach((q, idx) => {
+            if (q.type === 'sequence') state.answers[idx] = [...q.items.map(i => i.id)];
+        });
+
+        startTimer();
+        render();
+    };
+
+    function startTimer() {
+        state.timerInterval = setInterval(() => {
+            state.timeLeft--;
+            const timerEl = document.getElementById('timerText');
+            if (timerEl) {
+                const m = Math.floor(state.timeLeft / 60).toString().padStart(2, '0');
+                const s = (state.timeLeft % 60).toString().padStart(2, '0');
+                timerEl.innerText = `${m}:${s}`;
+            }
+            if (state.timeLeft <= 0) {
+                clearInterval(state.timerInterval);
+                finishTest();
+            }
+        }, 1000);
+    }
+
+    function renderTest() {
+        const q = QUESTIONS[state.currentQ];
+        const ans = state.answers[state.currentQ];
+
+        let gridHtml = '';
+        for (let i = 0; i < QUESTIONS.length; i++) {
+            let classes = 'nav-btn';
+            if (i === state.currentQ) classes += ' active';
+            if (isAnswered(i)) classes += ' answered';
+            gridHtml += `<button class="${classes}" onclick="goToQ(${i})">${i + 1}</button>`;
+        }
+
+        let questionHtml = '';
+        if (q.type === 'single') {
+            questionHtml = q.options.map(opt => {
+                const isSelected = ans === opt.id;
+                return `
+                    <label class="option-label ${isSelected ? 'selected' : ''}" onclick="setSingle(${state.currentQ}, '${opt.id}')">
+                        <div class="custom-radio"></div>
+                        <span>${opt.text}</span>
+                    </label>
+                `;
+            }).join('');
+        } 
+        else if (q.type === 'match') {
+            const letters = ['A', 'B', 'C', 'D', 'E'];
+            const uAns = ans || {};
+            
+            questionHtml += `<table class="match-grid"><tr><th></th>`;
+            ['А', 'Б', 'В', 'Г', 'Д'].forEach(r => questionHtml += `<th>${r}</th>`);
+            questionHtml += `</tr>`;
+            
+            q.left.forEach(l => {
+                questionHtml += `<tr><td style="font-weight:bold; text-align:left;">${l.text}</td>`;
+                q.right.forEach((r, rIdx) => {
+                    const isChecked = uAns[l.id] === r.id ? 'checked' : '';
+                    questionHtml += `<td><input type="radio" class="match-radio" name="match_${state.currentQ}_${l.id}" ${isChecked} onchange="setMatch(${state.currentQ}, '${l.id}', '${r.id}')"></td>`;
+                });
+                questionHtml += `</tr>`;
+            });
+            questionHtml += `</table>`;
+            questionHtml += `<div style="font-size:15px; margin-top:20px; line-height:1.6;">`;
+            q.right.forEach(r => questionHtml += `<div>${r.text}</div>`);
+            questionHtml += `</div>`;
+        }
+        else if (q.type === 'sequence') {
+            const currentArr = ans || [...q.items.map(i => i.id)];
+            currentArr.forEach((itemId, idx) => {
+                const itemObj = q.items.find(i => i.id === itemId);
+                questionHtml += `
+                    <div class="seq-item">
+                        <div class="seq-btns">
+                            <button class="seq-btn" ${idx === 0 ? 'disabled' : ''} onclick="moveSeq(${state.currentQ}, ${idx}, -1)">▲</button>
+                            <button class="seq-btn" ${idx === currentArr.length-1 ? 'disabled' : ''} onclick="moveSeq(${state.currentQ}, ${idx}, 1)">▼</button>
+                        </div>
+                        <div class="seq-num">${idx + 1}</div>
+                        <div style="font-weight:500;">${itemObj.text}</div>
+                    </div>
+                `;
+            });
+        }
+        else if (q.type === 'multi') {
+            const currentArr = ans || [];
+            questionHtml += `<div style="margin-bottom:15px; color:var(--gold); font-weight:700;">Обрано: ${currentArr.length} з 3</div>`;
+            questionHtml += q.options.map((opt, idx) => {
+                const isSelected = currentArr.includes(opt.id);
+                const isDisabled = !isSelected && currentArr.length >= 3;
+                return `
+                    <label class="option-label ${isSelected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}" onclick="${isDisabled ? '' : `toggleMulti(${state.currentQ}, '${opt.id}')`}">
+                        <div class="custom-check"></div>
+                        <span>${idx + 1}. ${opt.text}</span>
+                    </label>
+                `;
+            }).join('');
+        }
+
+        const m = Math.floor(state.timeLeft / 60).toString().padStart(2, '0');
+        const s = (state.timeLeft % 60).toString().padStart(2, '0');
+        const maxPts = q.type === 'single' ? 1 : (q.type === 'match' ? 4 : 3);
+
+        appDiv.innerHTML = `
+            <div class="test-container">
+                <div class="sidebar">
+                    <div class="timer-box">
+                        <div style="font-size:12px; text-transform:uppercase; letter-spacing:1px; margin-bottom:5px;">Залишилось часу</div>
+                        <div class="timer-time playfair" id="timerText">${m}:${s}</div>
+                    </div>
+                    <div class="card" style="padding: 20px;">
+                        <div style="text-align:center; font-weight:700; color:var(--olive); margin-bottom:15px;">НАВІГАЦІЯ</div>
+                        <div class="nav-grid">${gridHtml}</div>
+                    </div>
+                </div>
+                
+                <div class="main-content">
+                    <div class="card">
+                        <div class="question-header">
+                            <span class="q-number playfair">Завдання ${state.currentQ + 1}</span>
+                            <span class="q-points">Макс. балів: ${maxPts}</span>
+                        </div>
+                        <div class="q-text playfair">${q.text}</div>
+                        <div>${questionHtml}</div>
+                        
+                        <div class="controls">
+                            <button class="btn" style="background:var(--beige); color:var(--olive);" ${state.currentQ === 0 ? 'disabled' : ''} onclick="goToQ(${state.currentQ - 1})">← Попереднє</button>
+                            ${state.currentQ === QUESTIONS.length - 1 
+                                ? `<button class="btn btn-gold" onclick="finishTest()">Завершити тест</button>`
+                                : `<button class="btn" onclick="goToQ(${state.currentQ + 1})">Наступне →</button>`
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    window.goToQ = function(idx) {
+        if(idx >= 0 && idx < QUESTIONS.length) {
+            state.currentQ = idx;
+            render();
+        }
+    };
+
+    window.setSingle = function(qIdx, val) {
+        state.answers[qIdx] = val;
+        render();
+    };
+
+    window.setMatch = function(qIdx, leftId, rightId) {
+        if (!state.answers[qIdx]) state.answers[qIdx] = {};
+        state.answers[qIdx][leftId] = rightId;
+        render();
+    };
+
+    window.moveSeq = function(qIdx, index, dir) {
+        let arr = state.answers[qIdx];
+        if (!arr) return;
+        let temp = arr[index];
+        arr[index] = arr[index + dir];
+        arr[index + dir] = temp;
+        state.answers[qIdx] = arr;
+        render();
+    };
+
+    window.toggleMulti = function(qIdx, optId) {
+        let arr = state.answers[qIdx] || [];
+        if (arr.includes(optId)) {
+            state.answers[qIdx] = arr.filter(id => id !== optId);
+        } else if (arr.length < 3) {
+            state.answers[qIdx] = [...arr, optId];
+        }
+        render();
+    };
+
+    function isAnswered(idx) {
+        const ans = state.answers[idx];
+        const q = QUESTIONS[idx];
+        if (!ans) return false;
+        if (q.type === 'single') return !!ans;
+        if (q.type === 'match') return Object.keys(ans).length === 4;
+        if (q.type === 'sequence') return true; 
+        if (q.type === 'multi') return ans.length === 3;
+        return false;
+    }
+
+    window.finishTest = function() {
+        if (state.timeLeft > 0 && !confirm("Ви впевнені, що хочете завершити тест?")) return;
+        clearInterval(state.timerInterval);
+        
+        let total = 0;
+        let detailsHtml = '';
+
+        try {
+            QUESTIONS.forEach((q, idx) => {
+                const ans = state.answers[idx];
+                let pts = 0;
+                let maxPts = 0;
+                let userText = "";
+                let trueText = "";
+
+                if (q.type === 'single') {
+                    maxPts = 1;
+                    if (ans === q.correct) pts = 1;
+                    
+                    let uOpt = q.options.find(o => o.id === ans);
+                    userText = uOpt ? uOpt.text : "Не обрано";
+                    
+                    let tOpt = q.options.find(o => o.id === q.correct);
+                    trueText = tOpt ? tOpt.text : "Помилка бази";
+                } 
+                else if (q.type === 'match') {
+                    maxPts = 4;
+                    let uArr = [];
+                    let tArr = [];
+                    q.left.forEach(l => {
+                        const uRightId = ans ? ans[l.id] : null;
+                        
+                        const uOpt = q.right.find(r => r.id === uRightId);
+                        const uRightText = uOpt ? uOpt.text.charAt(0) : '-';
+                        
+                        const tOpt = q.right.find(r => r.id === q.correct[l.id]);
+                        const tRightText = tOpt ? tOpt.text.charAt(0) : '-';
+                        
+                        uArr.push(`${l.text.charAt(0)}-${uRightText}`);
+                        tArr.push(`${l.text.charAt(0)}-${tRightText}`);
+                        
+                        if (uRightId && uRightId === q.correct[l.id]) pts++;
+                    });
+                    userText = uArr.join(', ');
+                    trueText = tArr.join(', ');
+                }
+                else if (q.type === 'sequence') {
+                    maxPts = 3;
+                    const uAns = ans || [];
+                    let isFirst = uAns[0] === q.correct[0];
+                    let isLast = uAns[3] === q.correct[3];
+                    let isSecond = uAns[1] === q.correct[1];
+                    let isThird = uAns[2] === q.correct[2];
+
+                    if (isFirst && isSecond && isThird && isLast) pts = 3;
+                    else if (isFirst && isLast) pts = 2;
+                    else if (isFirst || isLast) pts = 1;
+
+                    userText = uAns.map((id, i) => {
+                        let it = q.items.find(x => x.id === id);
+                        return `${i+1}) ` + (it ? it.text : "Не обрано");
+                    }).join('<br>');
+                    
+                    trueText = q.correct.map((id, i) => {
+                        let it = q.items.find(x => x.id === id);
+                        return `${i+1}) ` + (it ? it.text : "Помилка");
+                    }).join('<br>');
+                }
+                else if (q.type === 'multi') {
+                    maxPts = 3;
+                    const uAns = ans || [];
+                    
+                    uAns.forEach(id => { if (q.correct.includes(id)) pts++; });
+                    
+                    userText = uAns.map(id => {
+                        let o = q.options.find(x => x.id === id);
+                        return o ? o.text : "";
+                    }).filter(Boolean).join('<br>') || "Не обрано";
+                    
+                    trueText = q.correct.map(id => {
+                        let o = q.options.find(x => x.id === id);
+                        return o ? o.text : "";
+                    }).filter(Boolean).join('<br>');
+                }
+
+                total += pts;
+                let statusClass = pts === maxPts ? "correct" : (pts > 0 ? "partial" : "wrong");
+
+                let qCleanText = q.text.replace(/<[^>]*>?/gm, '');
+
+                detailsHtml += `
+                    <div class="res-item ${statusClass}">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                            <div class="res-item-title">Завдання ${idx + 1}. ${qCleanText}</div>
+                            <div style="font-weight:bold; background:var(--beige); padding:4px 10px; border-radius:6px; white-space:nowrap; color:var(--olive);">${pts} / ${maxPts} б.</div>
+                        </div>
+                        <div class="res-ans user"><strong>Ваш вибір:</strong><br>${userText}</div>
+                        ${pts < maxPts ? `<div class="res-ans true"><strong>Правильна відповідь:</strong><br>${trueText}</div>` : ''}
+                    </div>
+                `;
+            });
+
+            state.screen = 'results';
+            appDiv.innerHTML = `
+                <div class="card" style="max-width: 800px; margin: 0 auto; border-top: 8px solid var(--gold);">
+                    <div class="res-header">
+                        <h2 class="playfair" style="font-size:32px; color:var(--olive); margin:0;">Тест завершено</h2>
+                        <div style="margin-top:10px; font-weight:600; color:var(--dark);">Учень: ${state.userName}</div>
+                        <div class="res-score playfair">${total}</div>
+                        <div style="color:var(--dark); font-weight:600; font-size:18px;">з 54 можливих балів</div>
+                    </div>
+                    <h3 class="playfair" style="color:var(--olive); border-bottom: 2px solid var(--beige); padding-bottom:10px;">Аналіз завдань:</h3>
+                    <div>${detailsHtml}</div>
+                    <button class="btn" style="margin-top:30px; width:100%; padding:20px; font-size:18px;" onclick="location.reload()">Спробувати ще раз</button>
+                </div>
+            `;
+            window.scrollTo(0,0);
+            
+        } catch(e) {
+            alert("Помилка підрахунку результатів: " + e.message);
+            console.error(e);
+        }
+    };
+
+    render();
+</script>
+</body>
+</html>
